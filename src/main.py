@@ -1,19 +1,20 @@
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException
 from databases import Database
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy import create_engine, MetaData
+from src.auth.router import router as router_auth
+from src.command.router import router as router_command
+from src.database import Base, engine
 
-DATABASE_URL = "sqlite:///test.db"
+app = FastAPI(
+    title="Minecraft command"
+)
 
-# Асинхронное подключение к базе данных
-database = Database(DATABASE_URL)
+Base.metadata.create_all(engine)
 
-# Настройка SQLAlchemy для создания моделей и таблиц
-metadata = MetaData()
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-
-app = FastAPI()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 
 
 @app.get("/")
@@ -24,3 +25,9 @@ async def root():
 @app.get("/hello/{name}")
 async def say_hello(name: str):
     return {"message": f"Hello {name}"}
+
+
+
+app.include_router(router_auth)
+
+app.include_router(router_command)
