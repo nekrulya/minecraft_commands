@@ -8,6 +8,10 @@ from src.auth.router import router as router_auth
 from src.command.router import router as router_command
 from src.database import Base, engine
 
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi import Request
+
 app = FastAPI(
     title="Minecraft command"
 )
@@ -16,10 +20,13 @@ Base.metadata.create_all(engine)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 
+# Указываем директорию с шаблонами
+templates = Jinja2Templates(directory="src/templates")
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
+
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.get("/hello/{name}")
