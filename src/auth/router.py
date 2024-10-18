@@ -25,7 +25,10 @@ async def register_user(user: UserCreate):
         raise HTTPException(status_code=400, detail="User already exists")
 
     await create_user(user.username, user.password)
-    return JSONResponse(status_code=201, content={"username": user.username})
+    return JSONResponse(
+        status_code=201,
+        content={"username": user.username}
+    )
 
 @router.post("/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -34,4 +37,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         access_token = create_access_token({"username": user.username})
         return {"access_token": access_token, "token_type": "bearer"}
 
-    return HTTPException(status_code=400, detail="Incorrect username or password")
+    return HTTPException(
+        status_code=400,
+        detail="Incorrect username or password"
+    )
