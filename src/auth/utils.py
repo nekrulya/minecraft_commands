@@ -1,3 +1,5 @@
+from typing import Dict
+
 import bcrypt
 from sqlalchemy import insert, select
 
@@ -26,3 +28,9 @@ async def get_user_by_username(username: str) -> User:
     user = await database.fetch_one(query)
     return user
 
+def get_user_dict(user) -> Dict[str, str]:
+    user_dict_new = {}
+    for key in user:
+        if key != "hashed_password":
+            user_dict_new[key] = user[key]
+    return user_dict_new

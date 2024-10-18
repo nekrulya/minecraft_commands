@@ -1,10 +1,13 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from sqlalchemy import select
 from starlette.responses import JSONResponse
 
+from src.auth.models import User
 from src.auth.schemas import UserCreate
 from src.auth.token_util import create_access_token
-from src.auth.utils import create_user, get_user_by_username, verify_password
+from src.auth.utils import create_user, get_user_by_username, verify_password, get_user_dict
+from src.database import database
 
 router = APIRouter(
     prefix="/user",
@@ -13,8 +16,16 @@ router = APIRouter(
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 
-@router.get("/{username}")
-async def get_user(username: str):
+@router.get("/")
+async def get_user(username: str | None = None):
+    if username is None:
+        query = select(User).order_by(User.username)
+        users = await database.fetch_all(query)
+        response = []
+        for user in users:
+            response.append(get_user_dict(user))
+        return response
+
     user = await get_user_by_username(username)
     return user
 

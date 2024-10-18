@@ -26,7 +26,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 async def get_command(command_id: int | None = None):
     # Получение всех команд
     if command_id is None:
-        query = select(Command).order_by(Command.name)
+        query = select(Command.name, Command.description, User.username.label('created_by')).join(User).order_by(Command.name)
         commands = await database.fetch_all(query)
         return commands
 
