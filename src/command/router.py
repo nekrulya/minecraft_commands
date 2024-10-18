@@ -22,11 +22,16 @@ router = APIRouter(
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 
 
-@router.get("/")
+@router.get("")
 async def get_command(command_id: int | None = None):
     # Получение всех команд
     if command_id is None:
-        query = select(Command.name, Command.description, User.username.label('created_by')).join(User).order_by(Command.name)
+        query = select(
+            Command.id,
+            Command.name,
+            Command.description,
+            User.username.label('created_by')
+        ).join(User).order_by(Command.name)
         commands = await database.fetch_all(query)
         return commands
 
@@ -34,7 +39,7 @@ async def get_command(command_id: int | None = None):
     command = await get_command_by_id(command_id)
     return command
 
-@router.post("/")
+@router.post("")
 async def command_create(
         command: CommandCreate,
         token : str = Depends(oauth2_scheme)):
@@ -55,7 +60,7 @@ async def command_create(
 
     try:
         stmt = insert(Command).values(
-            name=command.name,
+            name=command.name.lower(),
             description=command.description,
             created_by=user.id,
             created_at=datetime.now(),
@@ -120,21 +125,21 @@ async def command_delete(
         token : str = Depends(oauth2_scheme)
         ):
     # Проверка наличия записи
-    await get_command_by_id(command_id)
+    command = await get_command_by_id(command_id)
 
     token = verify_token(token)
     user = await get_user_by_username(token["username"])
 
     # Проверка наличия пользователя
     if user is None:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username"
         )
 
     # Проверка принадлежности команды пользователю
-    if user.id != command_id:
-        return HTTPException(
+    if user.id != command.created_by:
+        raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to perform this action"
         )
