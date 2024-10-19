@@ -44,6 +44,8 @@ async def register_user(user: UserCreate):
 @router.post("/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user = await get_user_by_username(form_data.username)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     if verify_password(form_data.password, user.hashed_password):
         access_token = create_access_token({"username": user.username})
         return {"access_token": access_token, "token_type": "bearer"}

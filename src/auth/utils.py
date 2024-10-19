@@ -28,9 +28,6 @@ async def get_user_by_username(username: str) -> User:
     query = select(User).where(User.username == username)
     user = await database.fetch_one(query)
 
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
     return user
 
 def get_user_dict(user) -> Dict[str, str]:
