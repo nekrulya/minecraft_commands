@@ -44,10 +44,10 @@ async def command_create(
         command: CommandCreate,
         token : str = Depends(oauth2_scheme)):
 
-    if command.name == '':
+    if command.name.strip() == '':
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name cannot be empty")
 
-    if command.description == '':
+    if command.description.strip() == '':
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Description cannot be empty")
 
     token = verify_token(token)
@@ -59,15 +59,15 @@ async def command_create(
 
     # Проверка наличия пользователя
     if user is None:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username"
         )
 
     try:
         stmt = insert(Command).values(
-            name=command.name.lower(),
-            description=command.description,
+            name=command.name.lower().strip(),
+            description=command.description.lower().strip(),
             created_by=user.id,
             created_at=datetime.now(),
             updated_at=datetime.now(),
@@ -78,7 +78,7 @@ async def command_create(
             content="Command created successfully"
         )
     except Exception as e:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Command creating error"
         )
@@ -88,6 +88,12 @@ async def command_update(
         command_id: int,
         command_data: CommandUpdate,
         token : str = Depends(oauth2_scheme)):
+
+    if command_data.name.strip() == '':
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name cannot be empty")
+
+    if command_data.description.strip() == '':
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Description cannot be empty")
 
     command = await get_command_by_id(command_id)
 
@@ -103,19 +109,21 @@ async def command_update(
 
     # Проверка наличия пользователя
     if user is None:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username"
         )
 
     # Проверка принадлежности команды пользователю
     if user.id != command.created_by:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to perform this action"
         )
 
     update_data = command_data.model_dump()
+    update_data["name"] = update_data["name"].lower().strip()
+    update_data["description"] = update_data["description"].lower().strip()
     update_data["updated_at"] = datetime.now()
 
     query = (
@@ -138,6 +146,9 @@ async def command_delete(
         ):
     # Проверка наличия записи
     command = await get_command_by_id(command_id)
+
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is missing")
 
     token = verify_token(token)
     user = await get_user_by_username(token["username"])
