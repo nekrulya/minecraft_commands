@@ -1,6 +1,7 @@
 from typing import Dict
 
 import bcrypt
+from fastapi import HTTPException
 from sqlalchemy import insert, select
 
 from src.auth.models import User
@@ -26,6 +27,10 @@ async def create_user(username: str, password: str) -> None:
 async def get_user_by_username(username: str) -> User:
     query = select(User).where(User.username == username)
     user = await database.fetch_one(query)
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
     return user
 
 def get_user_dict(user) -> Dict[str, str]:
