@@ -44,6 +44,12 @@ async def command_create(
         command: CommandCreate,
         token : str = Depends(oauth2_scheme)):
 
+    if command.name == '':
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name cannot be empty")
+
+    if command.description == '':
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Description cannot be empty")
+
     token = verify_token(token)
     username = token["username"]
     user = await get_user_by_username(username)
@@ -83,7 +89,13 @@ async def command_update(
         command_data: CommandUpdate,
         token : str = Depends(oauth2_scheme)):
 
-    if await get_command_by_name(command_data.name):
+    command = await get_command_by_id(command_id)
+
+    if command is None:
+        raise HTTPException(status_code=404, detail="Command not found")
+
+
+    if await get_command_by_name(command_data.name) and command_data.name != command.name:
         raise HTTPException(status_code=400, detail="Command name is taken")
 
     token = verify_token(token)
@@ -97,7 +109,7 @@ async def command_update(
         )
 
     # Проверка принадлежности команды пользователю
-    if user.id != command_id:
+    if user.id != command.created_by:
         return HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to perform this action"

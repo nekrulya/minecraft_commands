@@ -8,7 +8,10 @@ from src.database import database
 
 async def get_command_by_id(command_id: int):
     query = select(Command).where(Command.id == command_id)
+    print(command_id)
     command = await database.fetch_one(query)
+    print(command)
+
 
     # Проверка наличия команды
     if command is None:
