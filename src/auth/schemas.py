@@ -1,11 +1,11 @@
-from typing import Optional
-
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
-class UserRead(BaseModel):
-    username: str
+class UserBase(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+
+class UserRead(UserBase):
+    pass
 
 class UserCreate(BaseModel):
-    username: str
-    password: str
+    password: str = Field(..., min_length=4, max_length=128)

@@ -2,20 +2,21 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from starlette import status
 
+from src.auth.models import User
+from src.command.exceptions import CommandNotFoundException
 from src.command.models import Command
 from src.database import database
 
 
-async def get_command_by_id(command_id: int):
+async def get_command_by_id(command_id: int, username=False):
     query = select(Command).where(Command.id == command_id)
+
+    if username:
+        query = query.join(User).add_columns(User.username.label('created_by'))
+
     command = await database.fetch_one(query)
 
-    # Проверка наличия команды
-    if command is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Command not found"
-        )
+
 
     return command
 

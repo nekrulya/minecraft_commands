@@ -1,6 +1,7 @@
 from datetime import datetime
+from typing import Any, Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select, insert, update, delete
 from starlette import status
@@ -9,8 +10,9 @@ from starlette.responses import JSONResponse
 from src.auth.models import User
 from src.auth.token_util import verify_token
 from src.auth.utils import get_user_by_username
+from src.command.exceptions import CommandNotFoundException
 from src.command.models import Command
-from src.command.schemas import CommandCreate, CommandUpdate
+from src.command.schemas import CommandCreate, CommandUpdate, CommandRead, CommandCreateResponse, CommandReadResponse
 from src.command.utils import get_command_by_id, get_command_by_name
 from src.database import database
 
@@ -23,26 +25,32 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 
 
 @router.get("")
-async def get_command(command_id: int | None = None):
+async def get_command(
+        command_id: int | None = None,
+        offset: Annotated[int, Query(ge=0)] = 0,
+        limit: Annotated[int, Query(ge=1)] = 10
+) -> CommandReadResponse | list[CommandReadResponse]:
     # Получение всех команд
     if command_id is None:
         query = select(
-            Command.id,
-            Command.name,
-            Command.description,
+            Command,
             User.username.label('created_by')
         ).join(User).order_by(Command.name)
         commands = await database.fetch_all(query)
-        return commands
+        return commands[offset:offset + limit]
 
     # Получение конкретной команды
-    command = await get_command_by_id(command_id)
+    command = await get_command_by_id(command_id, username=True)
+    # Проверка наличия команды
+    if command is None:
+        raise CommandNotFoundException()
     return command
 
 @router.post("")
 async def command_create(
         command: CommandCreate,
-        token : str = Depends(oauth2_scheme)):
+        token : str = Depends(oauth2_scheme)
+) -> CommandCreateResponse | Any:
 
     if command.name.strip() == '':
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name cannot be empty")
@@ -97,9 +105,9 @@ async def command_update(
 
     command = await get_command_by_id(command_id)
 
+    # Проверка наличия команды
     if command is None:
-        raise HTTPException(status_code=404, detail="Command not found")
-
+        raise CommandNotFoundException()
 
     if await get_command_by_name(command_data.name) and command_data.name != command.name:
         raise HTTPException(status_code=400, detail="Command name is taken")
@@ -146,6 +154,8 @@ async def command_delete(
         ):
     # Проверка наличия записи
     command = await get_command_by_id(command_id)
+    if command is None:
+        raise CommandNotFoundException()
 
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is missing")
