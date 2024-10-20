@@ -1,18 +1,20 @@
 from datetime import datetime
-from typing import Any, Annotated
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select, insert, update, delete
 from starlette import status
-from starlette.responses import JSONResponse
 
+from src.auth.exceptions import UserNotFound
 from src.auth.models import User
 from src.auth.token_util import verify_token
 from src.auth.utils import get_user_by_username
-from src.command.exceptions import CommandNotFoundException
+from src.command.exceptions import CommandNotFoundError, CommandEmptyNameError, CommandEmptyDescriptionError, \
+    CommandNameIsTakenError, CommandForbiddenActionError
 from src.command.models import Command
-from src.command.schemas import CommandCreate, CommandUpdate, CommandRead, CommandCreateResponse, CommandReadResponse
+from src.command.schemas import CommandCreate, CommandUpdate, CommandCreateResponse, CommandReadResponse, \
+    CommandUpdateResponse, CommandDeleteResponse
 from src.command.utils import get_command_by_id, get_command_by_name
 from src.database import database
 
@@ -41,36 +43,33 @@ async def get_command(
 
     # Получение конкретной команды
     command = await get_command_by_id(command_id, username=True)
-    # Проверка наличия команды
     if command is None:
-        raise CommandNotFoundException()
+        raise CommandNotFoundError()
+
     return command
 
 @router.post("")
 async def command_create(
         command: CommandCreate,
         token : str = Depends(oauth2_scheme)
-) -> CommandCreateResponse | Any:
+) -> CommandCreateResponse:
 
     if command.name.strip() == '':
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name cannot be empty")
+        raise CommandEmptyNameError()
 
     if command.description.strip() == '':
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Description cannot be empty")
+        raise CommandEmptyDescriptionError()
+
+    if await get_command_by_name(command.name):
+        raise CommandNameIsTakenError()
 
     token = verify_token(token)
     username = token["username"]
     user = await get_user_by_username(username)
 
-    if await get_command_by_name(command.name):
-        raise HTTPException(status_code=400, detail="Command name is taken")
-
     # Проверка наличия пользователя
     if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username"
-        )
+        raise UserNotFound()
 
     try:
         stmt = insert(Command).values(
@@ -80,11 +79,10 @@ async def command_create(
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
-        await database.execute(stmt)
-        return JSONResponse(
-            status_code=status.HTTP_201_CREATED,
-            content="Command created successfully"
-        )
+        new_command_id = await database.execute(stmt)
+        command = await get_command_by_id(new_command_id)
+        return command
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -95,39 +93,34 @@ async def command_create(
 async def command_update(
         command_id: int,
         command_data: CommandUpdate,
-        token : str = Depends(oauth2_scheme)):
+        token : str = Depends(oauth2_scheme)
+) -> CommandUpdateResponse:
 
     if command_data.name.strip() == '':
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name cannot be empty")
+        raise CommandEmptyNameError()
 
     if command_data.description.strip() == '':
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Description cannot be empty")
+        raise CommandEmptyDescriptionError()
 
     command = await get_command_by_id(command_id)
 
     # Проверка наличия команды
     if command is None:
-        raise CommandNotFoundException()
+        raise CommandNotFoundError()
 
     if await get_command_by_name(command_data.name) and command_data.name != command.name:
-        raise HTTPException(status_code=400, detail="Command name is taken")
+        raise CommandNameIsTakenError()
 
     token = verify_token(token)
     user = await get_user_by_username(token["username"])
 
     # Проверка наличия пользователя
     if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username"
-        )
+        raise UserNotFound()
 
     # Проверка принадлежности команды пользователю
     if user.id != command.created_by:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to perform this action"
-        )
+        raise CommandForbiddenActionError()
 
     update_data = command_data.model_dump()
     update_data["name"] = update_data["name"].lower().strip()
@@ -142,20 +135,18 @@ async def command_update(
     )
     await database.execute(query)
 
-    return JSONResponse(
-        status_code=status.HTTP_202_ACCEPTED,
-        content="Command updated successfully"
-    )
+    command = await get_command_by_id(command_id)
+    return command
 
 @router.delete("/{command_id}")
 async def command_delete(
         command_id: int,
         token : str = Depends(oauth2_scheme)
-        ):
+) -> CommandDeleteResponse:
     # Проверка наличия записи
     command = await get_command_by_id(command_id)
     if command is None:
-        raise CommandNotFoundException()
+        raise CommandNotFoundError()
 
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is missing")
@@ -172,15 +163,9 @@ async def command_delete(
 
     # Проверка принадлежности команды пользователю
     if user.id != command.created_by:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to perform this action"
-        )
+        raise CommandForbiddenActionError()
 
     query = delete(Command).where(Command.id == command_id)
     await database.execute(query)
 
-    return JSONResponse(
-        status_code=status.HTTP_202_ACCEPTED,
-        content="Command deleted successfully"
-    )
+    return CommandDeleteResponse(name=command.name, description=command.description)
