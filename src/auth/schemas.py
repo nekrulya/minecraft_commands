@@ -7,5 +7,5 @@ class UserBase(BaseModel):
 class UserRead(UserBase):
     pass
 
-class UserCreate(BaseModel):
+class UserCreate(UserBase):
     password: str = Field(..., min_length=4, max_length=128)
