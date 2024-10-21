@@ -2,6 +2,8 @@ import os
 
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from starlette.responses import RedirectResponse
+from starlette.status import HTTP_301_MOVED_PERMANENTLY
 
 from src.config import REACT_IP_ADDR
 
@@ -34,15 +36,9 @@ app.add_middleware(
 )
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/", response_class=RedirectResponse)
 async def root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
-
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
-
+    return RedirectResponse(url="/docs", status_code=HTTP_301_MOVED_PERMANENTLY)
 
 
 app.include_router(router_auth)

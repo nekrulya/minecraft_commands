@@ -1,14 +1,11 @@
 from typing import Dict
 
 import bcrypt
+from databases import Database
 from fastapi import HTTPException
 from sqlalchemy import insert, select
 
 from src.auth.models import User
-from src.database import database, get_db
-
-from src.auth.token_util import create_access_token
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 def hash_password(password: str) -> str:
     salt = bcrypt.gensalt()
@@ -18,15 +15,15 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
 
-async def create_user(username: str, password: str) -> None:
+async def create_user(username: str, password: str, db: Database) -> None:
     hashed_password = hash_password(password)
     query = insert(User).values(username=username, hashed_password=hashed_password)
-    await database.execute(query)
+    await db.execute(query)
 
 
-async def get_user_by_username(username: str) -> User:
+async def get_user_by_username(username: str, db: Database) -> User:
     query = select(User).where(User.username == username)
-    user = await database.fetch_one(query)
+    user = await db.fetch_one(query)
 
     return user
 

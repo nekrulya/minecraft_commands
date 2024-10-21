@@ -68,7 +68,7 @@ async def command_create(
 
     token = verify_token(token)
     username = token["username"]
-    user = await get_user_by_username(username)
+    user = await get_user_by_username(username, db=db)
 
     # Проверка наличия пользователя
     if user is None:
@@ -116,7 +116,7 @@ async def command_update(
         raise CommandNameIsTakenError()
 
     token = verify_token(token)
-    user = await get_user_by_username(token["username"]) if token else None
+    user = await get_user_by_username(token["username"], db=db) if token else None
 
     # Проверка наличия пользователя
     if user is None:
@@ -157,7 +157,7 @@ async def command_delete(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is missing")
 
     token = verify_token(token)
-    user = await get_user_by_username(token["username"]) if token else None
+    user = await get_user_by_username(token["username"], db=db) if token else None
 
     # Проверка наличия пользователя
     if user is None:
