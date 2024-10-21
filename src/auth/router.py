@@ -64,3 +64,8 @@ async def login(
         status_code=400,
         detail="Incorrect username or password"
     )
+
+@router.get("/user_commands")
+async def get_user_commands(user_id: int, db: Database = Depends(get_db)):
+    user = await db.fetch_one(select(User).where(User.id == user_id))
+    return user
