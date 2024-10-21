@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from starlette.responses import RedirectResponse
 from starlette.status import HTTP_301_MOVED_PERMANENTLY
 
-from src.config import REACT_IP_ADDR
+from src.config import REACT_IP_ADDR, IP_ADDR_WORK
 
 from src.auth.router import router as router_auth
 from src.command.router import router as router_command
@@ -29,7 +29,7 @@ templates = Jinja2Templates(directory="src/templates")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[REACT_IP_ADDR, 'http://localhost:3000'],
+    allow_origins=[REACT_IP_ADDR, 'http://localhost:3000', IP_ADDR_WORK],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
