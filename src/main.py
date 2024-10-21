@@ -40,6 +40,7 @@ app.add_middleware(
 async def root(request: Request):
     return RedirectResponse(url="/docs", status_code=HTTP_301_MOVED_PERMANENTLY)
 
+print('hello')
 
 app.include_router(router_auth)
 
