@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy import insert, select
 
 from src.auth.models import User
-from src.database import database
+from src.database import database, get_db
 
 from src.auth.token_util import create_access_token
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm

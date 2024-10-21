@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 from sqlalchemy.orm import declarative_base
@@ -14,3 +15,12 @@ database = Database(DATABASE_URL)
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
 Base = declarative_base()
+
+async def get_db() -> AsyncGenerator[Database, None]:
+    try:
+        # Подключаемся к базе данных
+        await database.connect()
+        yield database  # Передаём подключение для использования
+    finally:
+        # Отключаемся от базы данных
+        await database.disconnect()

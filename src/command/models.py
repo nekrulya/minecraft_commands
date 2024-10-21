@@ -1,6 +1,5 @@
 from sqlalchemy import Table, Column, Integer, String, ForeignKey, DateTime, func
 from src.database import Base
-from datetime import datetime
 
 
 class Command(Base):

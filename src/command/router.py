@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Annotated
 
+from databases import Database
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select, insert, update, delete
@@ -16,7 +17,7 @@ from src.command.models import Command
 from src.command.schemas import CommandCreate, CommandUpdate, CommandCreateResponse, CommandReadResponse, \
     CommandUpdateResponse, CommandDeleteResponse
 from src.command.utils import get_command_by_id, get_command_by_name
-from src.database import database
+from src.database import get_db
 
 router = APIRouter(
     prefix="/command",
@@ -30,7 +31,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 async def get_command(
         command_id: int | None = None,
         offset: Annotated[int, Query(ge=0)] = 0,
-        limit: Annotated[int, Query(ge=1)] = 10
+        limit: Annotated[int, Query(ge=1)] = 10,
+        db: Database = Depends(get_db),
 ) -> CommandReadResponse | list[CommandReadResponse]:
     # Получение всех команд
     if command_id is None:
@@ -38,11 +40,11 @@ async def get_command(
             Command,
             User.username.label('created_by')
         ).join(User).order_by(Command.name)
-        commands = await database.fetch_all(query)
+        commands = await db.fetch_all(query)
         return commands[offset:offset + limit]
 
     # Получение конкретной команды
-    command = await get_command_by_id(command_id, username=True)
+    command = await get_command_by_id(command_id, username=True, db=db)
     if command is None:
         raise CommandNotFoundError()
 
@@ -51,7 +53,8 @@ async def get_command(
 @router.post("")
 async def command_create(
         command: CommandCreate,
-        token : str = Depends(oauth2_scheme)
+        token : str = Depends(oauth2_scheme),
+        db: Database = Depends(get_db),
 ) -> CommandCreateResponse:
 
     if command.name.strip() == '':
@@ -72,15 +75,15 @@ async def command_create(
         raise UserNotFound()
 
     try:
-        stmt = insert(Command).values(
+        query = insert(Command).values(
             name=command.name.lower().strip(),
             description=command.description.lower().strip(),
             created_by=user.id,
             created_at=datetime.now(),
             updated_at=datetime.now(),
         )
-        new_command_id = await database.execute(stmt)
-        command = await get_command_by_id(new_command_id)
+        new_command_id = await db.execute(query)
+        command = await get_command_by_id(new_command_id, db=db)
         return command
 
     except Exception as e:
@@ -93,7 +96,8 @@ async def command_create(
 async def command_update(
         command_id: int,
         command_data: CommandUpdate,
-        token : str = Depends(oauth2_scheme)
+        token : str = Depends(oauth2_scheme),
+        db: Database = Depends(get_db),
 ) -> CommandUpdateResponse:
 
     if command_data.name.strip() == '':
@@ -102,7 +106,7 @@ async def command_update(
     if command_data.description.strip() == '':
         raise CommandEmptyDescriptionError()
 
-    command = await get_command_by_id(command_id)
+    command = await get_command_by_id(command_id, db)
 
     # Проверка наличия команды
     if command is None:
@@ -133,18 +137,19 @@ async def command_update(
         .values(update_data)
         .returning(Command)
     )
-    await database.execute(query)
+    await db.execute(query)
 
-    command = await get_command_by_id(command_id)
+    command = await get_command_by_id(command_id, db)
     return command
 
 @router.delete("/{command_id}")
 async def command_delete(
         command_id: int,
-        token : str = Depends(oauth2_scheme)
+        token : str = Depends(oauth2_scheme),
+        db: Database = Depends(get_db),
 ) -> CommandDeleteResponse:
     # Проверка наличия записи
-    command = await get_command_by_id(command_id)
+    command = await get_command_by_id(command_id, db=db)
     if command is None:
         raise CommandNotFoundError()
 
@@ -166,6 +171,6 @@ async def command_delete(
         raise CommandForbiddenActionError()
 
     query = delete(Command).where(Command.id == command_id)
-    await database.execute(query)
+    await db.execute(query)
 
     return CommandDeleteResponse(name=command.name, description=command.description)
