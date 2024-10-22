@@ -1,7 +1,5 @@
-import os
-
-from fastapi import FastAPI, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import FastAPI
+from fastapi.security import OAuth2PasswordBearer
 from starlette.responses import RedirectResponse
 from starlette.status import HTTP_301_MOVED_PERMANENTLY
 
@@ -11,7 +9,6 @@ from src.auth.router import router as router_auth
 from src.command.router import router as router_command
 from src.database import Base, engine
 
-from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
