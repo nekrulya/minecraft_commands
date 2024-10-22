@@ -13,7 +13,7 @@ class CommandRead(CommandBase):
 
 class CommandReadResponse(CommandBase):
     id: int = Field(gt=0)
-    created_by: str
+    created_by: str | int
 
 class CommandCreate(CommandBase):
     pass

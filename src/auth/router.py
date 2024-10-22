@@ -7,9 +7,11 @@ from starlette.responses import JSONResponse
 
 from src.auth.exceptions import UserAlreadyExists, UserNotFound, UsernameIncorrectData
 from src.auth.models import User
-from src.auth.schemas import UserCreate, UserCreateResponse
+from src.auth.schemas import UserCreate, UserCreateResponse, UserRead, UserReadResponse
 from src.auth.token_util import create_access_token
 from src.auth.utils import create_user, get_user_by_username, verify_password, get_user_dict
+from src.command.schemas import CommandReadResponse
+from src.command.utils import get_commands_by_user_id
 from src.database import get_db
 
 router = APIRouter(
@@ -23,17 +25,14 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 async def get_user(
         username: str | None = None,
         db: Database = Depends(get_db)
-):
+) -> UserReadResponse | list[UserReadResponse]:
     if username is None:
-        query = select(User).order_by(User.username)
+        query = select(User.username).order_by(User.username)
         users = await db.fetch_all(query)
-        response = []
-        for user in users:
-            response.append(get_user_dict(user))
-        return response
+        return [UserReadResponse(username=user.username) for user in users]
 
     user = await get_user_by_username(username, db=db)
-    return user
+    return UserReadResponse(username=user.username)
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register_user(
@@ -46,13 +45,13 @@ async def register_user(
 
     await create_user(user.username, user.password, db=db)
     user = await get_user_by_username(user.username, db=db)
-    return user
+    return UserCreateResponse(username=user.username)
 
 @router.post("/login")
 async def login(
         form_data: OAuth2PasswordRequestForm = Depends(),
         db: Database = Depends(get_db)
-):
+) -> JSONResponse:
     user = await get_user_by_username(form_data.username, db=db)
     if not user:
         raise UserNotFound()
@@ -64,6 +63,6 @@ async def login(
 
 
 @router.get("/user_commands")
-async def get_user_commands(user_id: int, db: Database = Depends(get_db)):
-    user = await db.fetch_one(select(User).where(User.id == user_id))
-    return user
+async def get_user_commands(user_id: int, db: Database = Depends(get_db)) -> list[CommandReadResponse]:
+    commands = await get_commands_by_user_id(user_id=user_id, db=db)
+    return commands[:]

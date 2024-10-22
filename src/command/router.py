@@ -28,7 +28,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 
 
 @router.get("", summary="One or all commands")
-
 async def get_command(
         command_id: int | None = None,
         offset: Annotated[int, Query(ge=0)] = 0,
@@ -69,7 +68,7 @@ async def command_create(
     if command.description.strip() == '':
         raise CommandEmptyDescriptionError()
 
-    if await get_command_by_name(command.name):
+    if await get_command_by_name(command.name, db=db):
         raise CommandNameIsTakenError()
 
     token = verify_token(token)
@@ -118,7 +117,7 @@ async def command_update(
     if command is None:
         raise CommandNotFoundError()
 
-    if await get_command_by_name(command_data.name) and command_data.name != command.name:
+    if await get_command_by_name(command_data.name, db=db) and command_data.name != command.name:
         raise CommandNameIsTakenError()
 
     token = verify_token(token)

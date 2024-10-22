@@ -24,7 +24,6 @@ async def create_user(username: str, password: str, db: Database) -> None:
 async def get_user_by_username(username: str, db: Database) -> User:
     query = select(User).where(User.username == username)
     user = await db.fetch_one(query)
-
     return user
 
 def get_user_dict(user) -> Dict[str, str]:

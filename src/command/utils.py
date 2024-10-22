@@ -3,7 +3,6 @@ from sqlalchemy import select
 
 from src.auth.models import User
 from src.command.models import Command
-from src.database import database
 
 
 async def get_command_by_id(command_id: int, db: Database, username=False):
@@ -20,8 +19,13 @@ async def get_command_by_id(command_id: int, db: Database, username=False):
     command = await db.fetch_one(query)
     return command
 
-async def get_command_by_name(name: str):
+async def get_command_by_name(name: str, db: Database):
     name = name.lower().strip()
     query = select(Command).where(Command.name == name)
-    command = await database.fetch_one(query)
+    command = await db.fetch_one(query)
     return command
+
+async def get_commands_by_user_id(user_id: int, db: Database):
+    query = select(Command).where(Command.created_by == user_id)
+    commands = await db.fetch_all(query)
+    return commands
