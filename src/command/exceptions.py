@@ -21,3 +21,7 @@ class CommandNameIsTakenError(HTTPException):
 class CommandForbiddenActionError(HTTPException):
     def __init__(self):
         super().__init__(status_code=HTTP_403_FORBIDDEN, detail="You do not have permission to perform this action")
+
+class CommandNameError(HTTPException):
+    def __init__(self):
+        super().__init__(status_code=HTTP_400_BAD_REQUEST, detail="Illegal command name")

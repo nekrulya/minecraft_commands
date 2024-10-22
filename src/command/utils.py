@@ -33,6 +33,7 @@ async def get_commands_by_user_id(user_id: int, db: Database):
         .where(Command.created_by == user_id)
         .join(User)
         .add_columns(User.username.label('created_by'))
+        .order_by(Command.name)
     )
     commands = await db.fetch_all(query)
     return commands

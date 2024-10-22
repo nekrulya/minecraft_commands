@@ -13,6 +13,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 
+
 app = FastAPI(
     title="Minecraft command"
 )

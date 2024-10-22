@@ -27,12 +27,12 @@ async def get_user(
         db: Database = Depends(get_db)
 ) -> UserReadResponse | list[UserReadResponse]:
     if username is None:
-        query = select(User.username).order_by(User.username)
+        query = select(User).order_by(User.username)
         users = await db.fetch_all(query)
-        return [UserReadResponse(username=user.username) for user in users]
+        return [UserReadResponse(username=user.username, id=user.id) for user in users]
 
     user = await get_user_by_username(username, db=db)
-    return UserReadResponse(username=user.username)
+    return UserReadResponse(username=user.username, id=user.id)
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register_user(
