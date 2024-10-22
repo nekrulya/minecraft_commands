@@ -9,3 +9,6 @@ class UserRead(UserBase):
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=4, max_length=128)
+
+class UserCreateResponse(UserBase):
+    pass

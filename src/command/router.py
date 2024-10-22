@@ -27,13 +27,19 @@ router = APIRouter(
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 
 
-@router.get("")
+@router.get("", summary="One or all commands")
+
 async def get_command(
         command_id: int | None = None,
         offset: Annotated[int, Query(ge=0)] = 0,
         limit: Annotated[int, Query(ge=1)] = 10,
         db: Database = Depends(get_db),
 ) -> CommandReadResponse | list[CommandReadResponse]:
+    """
+        **command_id**: if None -> list of all commands, else specific by id\n
+        **offset**: from the beginning\n
+        **limit**: how many commands to return
+    """
     # Получение всех команд
     if command_id is None:
         query = select(
