@@ -62,7 +62,10 @@ async def login(
     return JSONResponse(status_code=200, content={"access_token": access_token, "token_type": "bearer"})
 
 
-@router.get("/user_commands")
-async def get_user_commands(user_id: int, db: Database = Depends(get_db)) -> list[CommandReadResponse]:
-    commands = await get_commands_by_user_id(user_id=user_id, db=db)
+@router.get("/commands")
+async def get_user_commands(username: str, db: Database = Depends(get_db)) -> list[CommandReadResponse]:
+    user = await get_user_by_username(username, db=db)
+    if user is None:
+        raise UserNotFound()
+    commands = await get_commands_by_user_id(user_id=user.id, db=db)
     return commands[:]

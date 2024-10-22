@@ -26,6 +26,11 @@ async def get_user_by_username(username: str, db: Database) -> User:
     user = await db.fetch_one(query)
     return user
 
+async def get_user_by_id(user_id: int, db: Database) -> User:
+    query = select(User).where(User.id == user_id)
+    user = await db.fetch_one(query)
+    return user
+
 def get_user_dict(user) -> Dict[str, str]:
     user_dict_new = {}
     for key in user:
