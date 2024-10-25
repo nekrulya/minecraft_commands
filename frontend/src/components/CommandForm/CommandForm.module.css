@@ -1,0 +1,29 @@
+.form {
+  max-width: 450px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  row-gap: 10px;
+  padding: 10px 0;
+}
+
+.name,
+.description {
+  height: 20px;
+  background-color: #18222d;
+  color: #fff;
+  border-radius: 10px;
+  border: none;
+  padding: 8px 8px;
+}
+
+.create_btn {
+  background-color: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 5px;
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+}

@@ -1,0 +1,16 @@
+@import url(./reset.css);
+
+.App {
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  flex-direction: column;
+
+  background-color: #18222d;
+  color: #fff;
+
+  padding: 20px;
+
+  /* font-family: 'Courier New', Courier, monospace; */
+  font-family: 'Arial', sans-serif;
+}

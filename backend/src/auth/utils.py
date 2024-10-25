@@ -2,10 +2,9 @@ from typing import Dict
 
 import bcrypt
 from databases import Database
-from fastapi import HTTPException
 from sqlalchemy import insert, select
 
-from src.auth.models import User
+from backend.src.auth.models import User
 
 def hash_password(password: str) -> str:
     salt = bcrypt.gensalt()

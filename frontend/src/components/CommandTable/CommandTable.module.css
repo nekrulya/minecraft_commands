@@ -1,0 +1,55 @@
+.table {
+  max-width: 800px;
+}
+
+.headings {
+}
+
+.heading {
+  font-size: 28px;
+  border: 2px solid #fff;
+  padding: 10px 15px;
+}
+
+.headings:first-child {
+  width: 50%;
+}
+
+.cells {
+}
+
+.cell {
+  font-size: 24px;
+  border: 2px solid #fff;
+  padding: 10px 15px;
+
+  text-align: center;
+  vertical-align: middle;
+
+  position: relative;
+}
+
+.cell_break_word {
+  word-break: break-word;
+}
+
+.copy_icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  cursor: pointer;
+}
+
+.manage_btns {
+}
+
+.edit_icon {
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.delete_icon {
+  cursor: pointer;
+}

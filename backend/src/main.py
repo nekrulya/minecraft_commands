@@ -3,11 +3,11 @@ from fastapi.security import OAuth2PasswordBearer
 from starlette.responses import RedirectResponse
 from starlette.status import HTTP_301_MOVED_PERMANENTLY
 
-from src.config import REACT_IP_ADDR, IP_ADDR_WORK
+from backend.src.config import REACT_IP_ADDR, IP_ADDR_WORK
 
-from src.auth.router import router as router_auth
-from src.command.router import router as router_command
-from src.database import Base, engine
+from backend.src.auth.router import router as router_auth
+from backend.src.command.router import router as router_command
+from backend.src.database import Base, engine
 
 from fastapi.templating import Jinja2Templates
 from fastapi import Request

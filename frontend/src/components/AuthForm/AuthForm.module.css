@@ -1,0 +1,51 @@
+.form {
+  max-width: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  row-gap: 10px;
+
+  padding: 10px 0 30px;
+}
+
+.username,
+.password {
+  height: 20px;
+
+  background-color: #213040;
+  color: #fff;
+
+  border-radius: 10px;
+  border: none;
+
+  padding: 8px 8px;
+}
+
+.btns {
+  display: flex;
+  column-gap: 10px;
+}
+
+.login_btn {
+  background-color: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 5px;
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.error_text {
+  color: #fff;
+  background-color: #b00000;
+
+  padding: 10px 8px;
+
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+
+  font-weight: bold;
+}

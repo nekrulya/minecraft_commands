@@ -1,10 +1,8 @@
 from databases import Database
 from sqlalchemy import select
 
-from src.auth.exceptions import UserNotFound
-from src.auth.models import User
-from src.auth.utils import get_user_by_id
-from src.command.models import Command
+from backend.src.auth.models import User
+from backend.src.command.models import Command
 
 
 async def get_command_by_id(command_id: int, db: Database, username=False):

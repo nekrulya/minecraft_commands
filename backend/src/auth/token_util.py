@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from typing import Optional
-from src.config import SECRET_KEY
+from backend.src.config import SECRET_KEY
 
 # Конфигурация
 ALGORITHM = "HS256"
