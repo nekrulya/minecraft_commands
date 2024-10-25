@@ -4,12 +4,13 @@ from typing import Annotated
 from databases import Database
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordBearer
+import paramiko
 from sqlalchemy import select, insert, update, delete
 from starlette import status
 import re
 import yaml
 
-from starlette.responses import FileResponse
+from starlette.responses import FileResponse, JSONResponse
 
 from src.auth.exceptions import UserNotFound
 from src.auth.models import User
@@ -21,7 +22,9 @@ from src.command.models import Command
 from src.command.schemas import CommandCreate, CommandUpdate, CommandCreateResponse, CommandReadResponse, \
     CommandUpdateResponse, CommandDeleteResponse
 from src.command.utils import get_command_by_id, get_command_by_name
-from src.database import get_db
+from src.database import get_db, database
+
+from src.config import SERVER_DNS, SERVER_PASSWORD, SERVER_PORT, SERVER_USERNAME, LEGAL_USERNAMES
 
 router = APIRouter(
     prefix="/command",
@@ -31,6 +34,19 @@ router = APIRouter(
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 
 name_pattern = r'^[A-Za-zА-Яа-яЁё0-9_ ]+$'
+
+def create_sftp_client(host, port, username, password):
+    transport = paramiko.Transport((host, port))
+    transport.connect(username=username, password=password)
+
+    sftp_client = paramiko.SFTPClient.from_transport(transport)
+
+    return sftp_client
+
+def upload_file_to_server(sftp_client, local_file, remote_file):
+    sftp_client.put(local_file, remote_file)
+
+sftp_client = create_sftp_client(SERVER_DNS, int(SERVER_PORT), SERVER_USERNAME, SERVER_PASSWORD)
 
 
 @router.get("", summary="One or all commands")
@@ -69,7 +85,6 @@ async def command_create(
 ) -> CommandCreateResponse:
     name, description = command.name.strip().lower(), command.description.strip().lower()
     name = "_".join(name.split())
-    description = "_".join(description.split())
 
     if name == '':
         raise CommandEmptyNameError()
@@ -119,7 +134,6 @@ async def command_update(
 
     name, description = command_data.name.strip().lower(), command_data.description.strip().lower()
     name = "_".join(name.split())
-    description = "_".join(description.split())
 
     if name == '':
         raise CommandEmptyNameError()
@@ -197,7 +211,6 @@ async def command_delete(
 
     query = delete(Command).where(Command.id == command_id)
     await db.execute(query)
-
     return CommandDeleteResponse(name=command.name, description=command.description)
 
 @router.get('/file')
@@ -218,3 +231,36 @@ async def get_file(db: Database = Depends(get_db)) -> FileResponse:
         yaml.dump(commands_to_yaml, stream=f, default_flow_style=False, indent=4, sort_keys=False, allow_unicode=True)
 
     return FileResponse("commands.yaml", status_code=status.HTTP_200_OK)
+
+@router.get('/send')
+async def send_commands_to_server(
+        token : str = Depends(oauth2_scheme),
+        db: Database = Depends(get_db)) -> JSONResponse:
+
+    token = verify_token(token)
+    username = token["username"]
+    user = await get_user_by_username(username, db=db)
+
+    # Проверка наличия пользователя
+    if user is None:
+        raise UserNotFound()
+
+    if username not in LEGAL_USERNAMES:
+        raise UserNotFound()
+
+    query = select(Command).order_by(Command.name)
+    commands = await db.fetch_all(query)
+    commands_to_yaml = {
+        "command-block-overrides": [],
+        "ignore-vanilla-permissions": False,
+        "aliases": {
+            "icanhasbukkit": ["version $1-"],
+        }
+    }
+    commands_data = {command.name: [command.description.strip("/")] for command in commands}
+    commands_to_yaml["aliases"].update(commands_data)
+
+    with open("commands.yml", mode="w", encoding="utf-8") as f:
+        yaml.dump(commands_to_yaml, stream=f, default_flow_style=False, indent=4, sort_keys=False, allow_unicode=True)
+
+    upload_file_to_server(sftp_client, "commands.yml", "commands.yml")
