@@ -27,7 +27,7 @@ templates = Jinja2Templates(directory="src/templates")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[REACT_IP_ADDR, 'http://localhost:3000', IP_ADDR_WORK],
+    allow_origins=["http://localhost:3000", "http://frontend:3000"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
