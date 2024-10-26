@@ -1,11 +1,12 @@
+from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 from sqlalchemy.orm import declarative_base
 
-from backend.src.config import DATABASE_URL
+from src.config import DATABASE_URL
 from databases import Database
 
-from sqlalchemy import create_engine
+from sqlalchemy import MetaData, create_engine
 
 # Асинхронное подключение к базе данных
 database = Database(DATABASE_URL)

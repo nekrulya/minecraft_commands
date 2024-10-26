@@ -1,6 +1,6 @@
 from sqlalchemy import  Column, Integer, String, ForeignKey, DateTime
 
-from backend.src.database import Base
+from src.database import Base
 
 
 class Command(Base):

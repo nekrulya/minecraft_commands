@@ -1,18 +1,18 @@
 from databases import Database
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy import select
 from starlette import status
 from starlette.responses import JSONResponse
 
-from backend.src.auth.exceptions import UserAlreadyExists, UserNotFound, UsernameIncorrectData
-from backend.src.auth.models import User
-from backend.src.auth.schemas import UserCreate, UserCreateResponse, UserReadResponse
-from backend.src.auth.token_util import create_access_token
-from backend.src.auth.utils import create_user, get_user_by_username, verify_password
-from backend.src.command.schemas import CommandReadResponse
-from backend.src.command.utils import get_commands_by_user_id
-from backend.src.database import get_db
+from src.auth.exceptions import UserAlreadyExists, UserNotFound, UsernameIncorrectData
+from src.auth.models import User
+from src.auth.schemas import UserCreate, UserCreateResponse, UserRead, UserReadResponse
+from src.auth.token_util import create_access_token
+from src.auth.utils import create_user, get_user_by_username, verify_password, get_user_dict
+from src.command.schemas import CommandReadResponse
+from src.command.utils import get_commands_by_user_id
+from src.database import get_db
 
 router = APIRouter(
     prefix="/user",

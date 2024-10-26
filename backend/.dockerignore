@@ -1,6 +1,0 @@
-../.venv
-.idea
-alembic
-Dockerfile
-test.db
-test_main.http

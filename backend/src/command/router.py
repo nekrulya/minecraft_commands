@@ -12,19 +12,19 @@ import yaml
 
 from starlette.responses import FileResponse, JSONResponse
 
-from backend.src.auth.exceptions import UserNotFound
-from backend.src.auth.models import User
-from backend.src.auth.token_util import verify_token
-from backend.src.auth.utils import get_user_by_username
-from backend.src.command.exceptions import CommandNotFoundError, CommandEmptyNameError, CommandEmptyDescriptionError, \
+from src.auth.exceptions import UserNotFound
+from src.auth.models import User
+from src.auth.token_util import verify_token
+from src.auth.utils import get_user_by_username
+from src.command.exceptions import CommandNotFoundError, CommandEmptyNameError, CommandEmptyDescriptionError, \
     CommandNameIsTakenError, CommandForbiddenActionError, CommandNameError
-from backend.src.command.models import Command
-from backend.src.command.schemas import CommandCreate, CommandUpdate, CommandCreateResponse, CommandReadResponse, \
+from src.command.models import Command
+from src.command.schemas import CommandCreate, CommandUpdate, CommandCreateResponse, CommandReadResponse, \
     CommandUpdateResponse, CommandDeleteResponse
-from backend.src.command.utils import get_command_by_id, get_command_by_name
-from backend.src.database import get_db
+from src.command.utils import get_command_by_id, get_command_by_name
+from src.database import get_db, database
 
-from backend.src.config import SERVER_DNS, SERVER_PASSWORD, SERVER_PORT, SERVER_USERNAME, LEGAL_USERNAMES
+from src.config import SERVER_DNS, SERVER_PASSWORD, SERVER_PORT, SERVER_USERNAME, LEGAL_USERNAMES
 
 router = APIRouter(
     prefix="/command",
