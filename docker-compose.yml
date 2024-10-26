@@ -1,9 +1,13 @@
-version: "3.8"
+version: "3.4"
 
 services:
   backend:
     build: ./backend
     container_name: backend
+    deploy:
+      resources:
+        limits:
+          memory: 200m
     env_file:
       - ./backend/.env
     ports:
@@ -14,6 +18,10 @@ services:
   frontend:
     build: ./frontend
     container_name: frontend
+    deploy:
+      resources:
+        limits:
+          memory: 200m
     env_file:
       - ./frontend/.env
     ports:
