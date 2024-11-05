@@ -1,5 +1,5 @@
 # minecraft commands
-[Minecraft commands](http://37.139.62.167/) - мини web-приложение для добавления alias'ов (комманд) на майнкрафт сервера по sftp.
+[Minecraft commands](http://37.139.62.167/) - мини web-приложение для добавления alias'ов (команд) на майнкрафт сервера по sftp.
 
 ## Требования
 * Mac / Linux
